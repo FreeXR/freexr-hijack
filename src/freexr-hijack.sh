@@ -35,7 +35,7 @@ set -e # Exit on false return
 
 # --- Functions ---
 disable() { adb shell pm disable-user --user 0 "$1" ;} # Disable Package
-enable() { true; } # Enable Package
+enable() { adb shell pm enable --user 0 "$1"; } # Enable Package
 uninstall() { true;} # Uninstall Package
 
 # --- Prevent OTA Updates ---
@@ -54,8 +54,8 @@ enable com.android.providers.settings # Stores settings preferences (critical fo
 enable com.oculus.panelapp.settings # Quick Settings from bar
 
 # --- Core Oculus Services (Minimal Set) ---
-enable com.oculus.q4bservice # Manages Oculus for Business services (optional based on use case)
-enable com.oculus.vrusb # Manages USB connectivity (important for VR accessories)
+# enable com.oculus.q4bservice # Manages Oculus for Business services (optional based on use case) PROTECTED
+# enable com.oculus.vrusb # Manages USB connectivity (important for VR accessories) PROTECTED
 enable com.oculus.systemresource # Displays technical system data (useful but not intrusive)
 
 # --- VR Camera Service ---
@@ -80,27 +80,25 @@ disable com.oculus.mrds # Mixed reality (not needed)
 disable com.oculus.os.qrcodereader # QR Code reader (fixed package name)
 
 # --- Android Files (Not Required with 3rd Party System) ---
-disable com.android.providers.contacts # Contact management (not needed)
-disable com.android.providers.media.module # Media module (disabled)
-disable com.android.providers.downloads # Download manager (disabled)
-disable com.android.providers.calendar # Calendar (not needed)
-disable com.android.shell # Shell (disabled)
-disable com.android.externalstorage # External storage (not needed)
-disable com.android.captiveportallogin # Captive portal login (not needed)
+enable com.android.providers.contacts # Contact management (not needed)
+enable com.android.providers.media.module # Media module (disabled)
+enable com.android.providers.downloads # Download manager
+enable com.android.providers.calendar # Calendar (not needed)
+enable com.android.shell # Shell (disabled)
+enable com.android.externalstorage # External storage (not needed)
+enable com.android.captiveportallogin # Captive portal login (not needed)
 
 # --- Miscellaneous Android System Services ---
-disable com.android.wifi.resources # Wi-Fi resources (handled by networkstack)
+enable com.android.wifi.resources # Wi-Fi resources (handled by networkstack)
 disable com.android.adservices.api # Ad services (disabled)
-disable com.android.hotspot2.osulogin # Hotspot login (not needed)
-disable com.android.externalstorage # External storage (disabled)
-disable com.android.keychain # Keychain (already enabled for secure storage)
-disable com.android.permissioncontroller # Permission controller (handled by OS)
+enable com.android.hotspot2.osulogin # Hotspot login
+enable com.android.externalstorage # External storage
+enable com.android.keychain # Keychain
+enable com.android.permissioncontroller # Permission controller
 
 # --- Services Related to Meta Apps (To Be Disabled) ---
 disable com.oculus.horizonmediaplayer # Horizon media player (not needed)
 disable com.oculus.presence # Presence (disabled for minimal UI)
-disable com.oculus.updater # Disable updates (not required)
-disable com.oculus.metacam # MetaCam is required for camera functionality in VR environments (keep enabled)
 
 # --- Other Non-Essential System Services ---
 disable com.oculus.systemactivities # System activities tracking (disabled)
@@ -113,7 +111,6 @@ disable com.oculus.deviceauthserver # Device authentication (disabled)
 
 # --- Additional Cleanup ---
 disable com.oculus.linefrequencyservice # Line frequency (unnecessary)
-disable com.oculus.panelapp.settings # Settings panel (not needed)
 disable com.oculus.tv # TV app (unnecessary)
 
 # --- Companion Server ---
@@ -144,4 +141,3 @@ disable com.oculus.tv # TV app (unnecessary)
 # FIXME(Krey): Install Stremio for META Quest as replacement for META TV and Theater anywhere
 # FIXME(Krey): Install OSMAnd as replacement for maps
 # FIXME(Krey): Make sure that META can't write killswitch in the required directory 
-
