@@ -33,102 +33,81 @@
 
 set -e # Exit on false return
 
-# --- Functions ---
-disable() { adb shell pm disable-user --user 0 "$1" ;} # Disable Package
-enable() { adb shell pm enable --user 0 "$1"; } # Enable Package
-uninstall() { true;} # Uninstall Package
+# shellcheck source=./lib/common.sh
+. ./src/lib/common.sh # Source Common Libraries
+# shellcheck source=./lib/removeStockApps.sh
+. ./src/lib/removeStockApps.sh # Source Remove Stock Apps
 
-# --- Prevent OTA Updates ---
-disable com.oculus.updater # Disable updates on META Quest Devices
-
-# --- Essential Services for VR Shell (Keep Enabled) ---
-enable com.oculus.vrshell # VR Shell itself, essential for VR environment
-enable com.oculus.os.vrlockscreen # VR lock screen functionality (important for secure navigation in VR)
-
-# --- Core System Services ---
-enable com.android.settings # Basic settings for configuration
-enable com.android.networkstack # Core networking stack (important for Wi-Fi, networking)
-enable com.android.inputdevices # Input devices (touch, controllers)
-enable com.android.keychain # Keychain for secure data management
-enable com.android.providers.settings # Stores settings preferences (critical for system setup)
-enable com.oculus.panelapp.settings # Quick Settings from bar
-
-# --- Core Oculus Services (Minimal Set) ---
-# enable com.oculus.q4bservice # Manages Oculus for Business services (optional based on use case) PROTECTED
-# enable com.oculus.vrusb # Manages USB connectivity (important for VR accessories) PROTECTED
-enable com.oculus.systemresource # Displays technical system data (useful but not intrusive)
-
-# --- VR Camera Service ---
-enable com.oculus.metacam # Required for camera access in VR environments (disabled otherwise)
-
-# --- System Utilities and Miscellaneous ---
-disable com.oculus.systemutilities # System utilities (opens files, unnecessary for minimal setup)
-disable com.oculus.panelapp.library # Oculus library (not needed for minimal UI)
-
-# --- Disable Meta and Oculus Bloatware ---
-disable com.oculus.avatareditor # Avatar editor (doesn’t load without Meta services, unnecessary)
-disable com.oculus.identitymanagement.service # Identity management (bloat, not necessary)
-disable com.oculus.firsttimenux # First-time setup (you’re skipping this for a minimal setup)
-disable com.meta.pclinkservice.server # Oculus Link (disabled as you are using a 3rd party replacement)
-disable com.oculus.hzosgallery # VR gallery (not needed)
-disable com.oculus.q4b.mdm # Device management (disabled)
-disable com.oculus.store # Oculus store (not needed for now)
-disable com.oculus.assistant # Voice assistant (disabled)
-disable com.oculus.socialplatform # Social services (disabled)
-disable com.oculus.explore # Explore app (not required)
-disable com.oculus.mrds # Mixed reality (not needed)
-disable com.oculus.os.qrcodereader # QR Code reader (fixed package name)
-
-# --- Android Files (Not Required with 3rd Party System) ---
-enable com.android.providers.contacts # Contact management (not needed)
-enable com.android.providers.media.module # Media module (disabled)
-enable com.android.providers.downloads # Download manager
-enable com.android.providers.calendar # Calendar (not needed)
-enable com.android.shell # Shell (disabled)
-enable com.android.externalstorage # External storage (not needed)
-enable com.android.captiveportallogin # Captive portal login (not needed)
-
-# --- Miscellaneous Android System Services ---
-enable com.android.wifi.resources # Wi-Fi resources (handled by networkstack)
-disable com.android.adservices.api # Ad services (disabled)
-enable com.android.hotspot2.osulogin # Hotspot login
-enable com.android.externalstorage # External storage
-enable com.android.keychain # Keychain
-enable com.android.permissioncontroller # Permission controller
-
-# --- Services Related to Meta Apps (To Be Disabled) ---
-disable com.oculus.horizonmediaplayer # Horizon media player (not needed)
-disable com.oculus.presence # Presence (disabled for minimal UI)
-
-# --- Other Non-Essential System Services ---
-disable com.oculus.systemactivities # System activities tracking (disabled)
-disable com.oculus.quickpromotionservice # Not required
-disable com.oculus.externaldisplayservice # External display service (not needed)
-disable com.oculus.magicislandcastingservice # VR casting (not needed)
-disable com.oculus.os.clearactivity # No clear activity required
-disable com.oculus.panelapp.kiosk # Kiosk mode (disabled)
-disable com.oculus.deviceauthserver # Device authentication (disabled)
-
-# --- Additional Cleanup ---
-disable com.oculus.linefrequencyservice # Line frequency (unnecessary)
-disable com.oculus.tv # TV app (unnecessary)
-
-# --- Companion Server ---
-# FIXME(Krey): Sanitize Companion Server so that META can't use it as backdoor, likely by decompiling it and replacing it with adjusted app
-# disable com.oculus.companion.server # Companion server (protected package, cannot be disabled without root)
+removeStockApps
 
 # --- Hand Tracking ---
 # FIXME(Krey): Make hand tracking to works, at minimal we need the guidebook app and require user interaction to enable these in the quest settings
+installApkPath "$gitRoot/vendor/guidebook.apk" # Install guidebook (Needed to enable Hand-Tracking)
 
-# --- Neo Store ---
-# FIXME(Krey): Install Neo Store as replacement for META Store
+# --- Invizible Pro --- (Networking Management)
+fdroidInstallApk "pan.alexander.tordnscrypt.stable_25303"
+# FIXME(Krey): Configure to use VPN Mode with Kill Switch
+# FIXME(Krey): Configure to start Tor + DNSCrypt + I2P on boot
+
+# --- Store --- (META Store Alternative)
+# Neo Store
+fdroidInstallApk "com.machiav3lli.fdroid_1104"
 # FIXME(Krey): Configure Neo Store to use Tor
 # FIXME(Krey): Configure Neo Store to use our f-droid repositories
 # FIXME(Krey): Ask SideQuest to provide f-droid repository for their apps
+# Itch.io (Mitch)
+fdroidInstallApk "ua.gardenapple.itchupdater_20303"
+# GPlay
+fdroidInstallApk "com.aurora.store_70"
 
-# --- Lightning Launcher ---
-# FIXME(Krey): Install Lightning Launcher
+# --- Lightning Launcher --- (Library Alternative)
+# Install Lightning Launcher
+installApkFromURL "https://github.com/threethan/LightningLauncher/releases/download/9.1.0/LightningLauncher.apk" "com.threethan.launcher.apk"
 # FIXME(Krey): Replace the menu button in systemux to launch lightning launcher
+adb shell am start com.threethan.launcher # Open The Launcher to make it accessible
+
+# --- Tubular --- (YouTube Alternative)
+fdroidInstallApk "org.polymorphicshade.tubular_1005"
+
+# --- Wivrn --- (Oculus Link Alternative)
+installApkFromURL "https://github.com/WiVRn/WiVRn/releases/download/v25.8/WiVRn-standard-release.apk" "org.meumeu.wivrn.github.apk"
+
+# --- AI --- (META AI ALternative)
+# Replace META AI with Ollama .. the irony
+installApkFromURL "https://github.com/JHubi1/ollama-app/releases/download/1.2.0/ollama-android-v1.2.0.apk" "com.freakurl.apps.ollama.apk"
+
+# --- Maps ---
+fdroidInstallApk "net.osmand.plus_510703"
+
+# --- App Manager ---
+fdroidInstallApk "io.github.muntashirakon.AppManager_445"
+
+# --- Web Browser ---
+fdroidInstallApk "org.mozilla.fennec_fdroid_1410220"
+
+# --- E-Mail ---
+fdroidInstallApk "com.fsck.k9_39025"
+
+# --- File Browser ---
+fdroidInstallApk "me.zhanghai.android.files_39"
+
+# --- Voice Assistant ---
+fdroidInstallApk "org.stypox.dicio_16"
+# FIXME(Krey): Once requested it turns the EmuShell into an infinite loading bar
+installApkFromURL "https://voiceinput.futo.org/VoiceInput/standalone.apk" "org.futo.voiceinput.apk"
+fdroidInstallApk "org.woheller69.ttsengine_24"
+
+# --- Video Player ---
+fdroidInstallApk "dev.anilbeesetti.nextplayer_31"
+
+# --- Smart Phone Integration ---
+fdroidInstallApk "org.kde.kdeconnect_tp_13304"
+
+# --- WhoBird ---
+fdroidInstallApk "org.woheller69.whobird_46"
+
+# --- Calendar ---
+fdroidInstallApk "ws.xsoh.etar_51"
 
 # --- (Optional) META Apps
 # FIXME(Krey): Figure out how to make META apps to work in this environment e.g. sandboxing them
@@ -136,8 +115,6 @@ disable com.oculus.tv # TV app (unnecessary)
 # --- Other changes ---
 # FIXME(Krey): Remove META app pins from the bottom bar
 # FIXME(Krey): Remove horizon app
-# FIXME(Krey): Install wivrn as replacement to oculus link
 # FIXME(Krey): Enable seamless multitasking
 # FIXME(Krey): Install Stremio for META Quest as replacement for META TV and Theater anywhere
-# FIXME(Krey): Install OSMAnd as replacement for maps
-# FIXME(Krey): Make sure that META can't write killswitch in the required directory 
+# FIXME(Krey): Make sure that META can't write killswitch in the required directory
