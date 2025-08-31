@@ -1,12 +1,13 @@
 #!/usr/bin/env sh
 # shellcheck shell=sh # POSIX
 
+###! Script to remove all vendor-supplied apps to debloat the device while maintaining minimal functionality
+
 set -e # Exit on False
 
-# shellcheck source=./common.sh
-# FIXME-QA(Krey): This is not meant to be here, but sourcing above doesn't work?
-# shellcheck disable=SC2154 # Referenced but not assigned, but for library?
-
+# shellcheck source=../lib/common.sh
+. "${gitRoot:-"$(git rev-parse --show-toplevel || true)"}/src/lib/common.sh" # Source Common Libraries
+1
 # Attempts to remove all META applications, if we can't remove them then we disable
 removeStockApps() {
 	case "$productManufacturer" in
@@ -95,6 +96,8 @@ removeStockApps() {
 			# FIXME(Krey): Sanitize Companion Server so that META can't use it as backdoor, likely by decompiling it and replacing it with adjusted app
 			# disable com.oculus.companion.server # Companion server (protected package, cannot be disabled without root)
 		;;
-		*) die 1 "This Manufacturer '$productManufacturer' is not yet implemented!"
+		*) fixme "This Manufacturer '$productManufacturer' is not yet implemented!"
 	esac
 }
+
+removeStockApps
