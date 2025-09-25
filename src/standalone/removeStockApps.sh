@@ -1,20 +1,20 @@
-#!/usr/bin/env sh
-# shellcheck shell=sh # POSIX
+#!/usr/bin/env ksh
+# shellcheck shell=ksh # POSIX
 
 ###! Script to remove all vendor-supplied apps to debloat the device while maintaining minimal functionality
 
 set -e # Exit on False
 
 # shellcheck source=../lib/common.sh
-. "${gitRoot:-"$(git rev-parse --show-toplevel || true)"}/src/lib/common.sh" # Source Common Libraries
-1
+[ -n "$commonsSourced" ] || . "${gitRoot:-"$(git rev-parse --show-toplevel || true)"}/src/lib/common.sh" # Source Common Libraries
+
 # Attempts to remove all META applications, if we can't remove them then we disable
 removeStockApps() {
 	case "$productManufacturer" in
 		"Oculus")
 			case "$productName" in
-				"eureka") true ;;
-				*) die 1 "This device '$productName' is not yet implemented"
+				"eureka"|"panther") true ;;
+				*) die 1 "This device '$productName' is not yet implemented in '$0'"
 			esac
 
 			# --- Prevent OTA Updates ---
@@ -69,20 +69,20 @@ removeStockApps() {
 
 			# --- Miscellaneous Android System Services ---
 			enableApp com.android.wifi.resources # Wi-Fi resources (handled by networkstack)
-			disableApp com.android.adservices.api # Ad services (disabled)
+			[ "$productName" != "eureka" ] || disableApp com.android.adservices.api # Ad services (disabled)
 			enableApp com.android.hotspot2.osulogin # Hotspot login
 			enableApp com.android.externalstorage # External storage
 			enableApp com.android.keychain # Keychain
 			enableApp com.android.permissioncontroller # Permission controller
 
 			# --- Services Related to Meta Apps (To Be Disabled) ---
-			disableApp com.oculus.horizonmediaplayer # Horizon media player (not needed)
+			[ "$productName" != "eureka" ] || disableApp com.oculus.horizonmediaplayer # Horizon media player (not needed)
 			disableApp com.oculus.presence # Presence (disabled for minimal UI)
 
 			# --- Other Non-Essential System Services ---
 			disableApp com.oculus.systemactivities # System activities tracking (disabled)
 			disableApp com.oculus.quickpromotionservice # Not required
-			disableApp com.oculus.externaldisplayservice # External display service (not needed)
+			[ "$productName" != "eureka" ] || disableApp com.oculus.externaldisplayservice # External display service (not needed)
 			disableApp com.oculus.magicislandcastingservice # VR casting (not needed)
 			disableApp com.oculus.os.clearactivity # No clear activity required
 			disableApp com.oculus.panelapp.kiosk # Kiosk mode (disabled)
@@ -100,4 +100,5 @@ removeStockApps() {
 	esac
 }
 
-removeStockApps
+# FIXME(Krey): Figure out how to prevent this from being executed on `. path/to/this/file`
+# removeStockApps

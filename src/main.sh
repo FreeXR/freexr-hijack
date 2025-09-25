@@ -1,4 +1,5 @@
-#!/usr/bin/env sh
+#!/usr/bin/env ksh
+# shellcheck shell=ksh # POSIX
 
 ### DO NOT RUN THIS SCRIPT! EVALUATION AND DEVELOPMENT ONLY! ###
 
@@ -34,12 +35,32 @@
 set -e # Exit on false return
 
 # shellcheck source=./lib/common.sh
-. ./src/lib/common.sh # Source Common Libraries
+. "${gitRoot:-"$(git rev-parse --show-toplevel || true)"}/src/lib/common.sh" # Source Common Libraries
+
+# shellcheck source=./standalone/disableUpdates.sh
+. "$gitRoot/src/standalone/disableUpdates.sh"
+
+# shellcheck source=./standalone/enableHandTracking.sh
+. "$gitRoot/src/standalone/enableHandTracking.sh"
+
+# shellcheck source=./standalone/removeStockApps.sh
+. "$gitRoot/src/standalone/removeStockApps.sh"
+
+# shellcheck source=./standalone/rootDevice.sh
+. "$gitRoot/src/standalone/rootDevice.sh"
 
 # Process Arguments
 while [ "$#" -gt 0 ]; do case "$1" in
 	"-d"|"--debug") DEBUG=1 ;;
 	"--HIJACK")
+		disableUpdates
+
+		rootDevice
+
+		enableHandTracking
+
+		removeStockApps
+
 		# --- Invizible Pro --- (Networking Management)
 		fdroidInstallApk "pan.alexander.tordnscrypt.stable_25303"
 		# FIXME(Krey): Configure to use VPN Mode with Kill Switch
@@ -58,19 +79,29 @@ while [ "$#" -gt 0 ]; do case "$1" in
 
 		# --- Lightning Launcher --- (Library Alternative)
 		# Install Lightning Launcher
-		installApkFromURL "https://github.com/threethan/LightningLauncher/releases/download/9.1.0/LightningLauncher.apk" "com.threethan.launcher.apk"
+		installApkFromURL \
+		com.threethan.launcher \
+		https://github.com/threethan/LightningLauncher/releases/download/9.1.0/LightningLauncher.apk \
+		b3567f68f34c11e6df5699292fde82493eb85135e3066363e7fd1ef945401f24
 		# FIXME(Krey): Replace the menu button in systemux to launch lightning launcher
-		adb shell am start com.threethan.launcher # Open The Launcher to make it accessible
+			adb shell am start com.threethan.launcher
 
 		# --- Tubular --- (YouTube Alternative)
 		fdroidInstallApk "org.polymorphicshade.tubular_1005"
 
 		# --- Wivrn --- (Oculus Link Alternative)
-		installApkFromURL "https://github.com/WiVRn/WiVRn/releases/download/v25.8/WiVRn-standard-release.apk" "org.meumeu.wivrn.github.apk"
+		installApkFromURL \
+		org.meumeu.wivrn.github \
+		"https://github.com/WiVRn/WiVRn/releases/download/v25.8/WiVRn-standard-release.apk" \
+		9911a8f2aae92bddfe8f3bc3b70b24219105d0d0d5fe82e5206e9bb8f33d3cda
 
 		# --- AI --- (META AI ALternative)
 		# Replace META AI with Ollama .. the irony
-		installApkFromURL "https://github.com/JHubi1/ollama-app/releases/download/1.2.0/ollama-android-v1.2.0.apk" "com.freakurl.apps.ollama.apk"
+		installApkFromURL \
+		com.freakurl.apps.ollama \
+		https://github.com/JHubi1/ollama-app/releases/download/1.2.0/ollama-android-v1.2.0.apk \
+		6573009c09e6f8284b91607ddc81b1a3860aaa55f6c2f167217d71c3af1adf87
+		# FIXME(Krey): Remove META AI app
 
 		# --- Maps ---
 		fdroidInstallApk "net.osmand.plus_510703"
@@ -90,7 +121,10 @@ while [ "$#" -gt 0 ]; do case "$1" in
 		# --- Voice Assistant ---
 		fdroidInstallApk "org.stypox.dicio_16"
 		# FIXME(Krey): Once requested it turns the EmuShell into an infinite loading bar
-		installApkFromURL "https://voiceinput.futo.org/VoiceInput/standalone.apk" "org.futo.voiceinput.apk"
+		installApkFromURL \
+		org.futo.voiceinput \
+		https://voiceinput.futo.org/VoiceInput/standalone.apk \
+		a515fec7187188f66a789ee98ca0578bd86f5299f0e0b28d861d3de2ff97a975
 		fdroidInstallApk "org.woheller69.ttsengine_24"
 
 		# --- Video Player ---

@@ -39,6 +39,7 @@
 					name = "FreeXR-devshell";
 					nativeBuildInputs = [
 						# Shell
+						inputs.nixpkgs.legacyPackages.${system}.ksh # Running scrips
 						inputs.nixpkgs.legacyPackages.${system}.bashInteractive # For terminal
 						inputs.nixpkgs.legacyPackages.${system}.shellcheck # Linting of shell files
 
@@ -53,6 +54,7 @@
 						inputs.nixpkgs.legacyPackages.${system}.wget # Downloading
 
 						inputs.nixos-generators.packages.${system}.nixos-generate
+
 					];
 					inputsFrom = [
 						config.mission-control.devShell

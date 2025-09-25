@@ -1,5 +1,5 @@
-#!/usr/bin/env sh
-# shellcheck shell=sh # POSIX
+#!/usr/bin/env ksh
+# shellcheck shell=ksh # POSIX
 
 ###! Enables Hand Tracking
 ###!
@@ -14,7 +14,7 @@
 set -e # Exit on false return
 
 # shellcheck source=../lib/common.sh
-. "${gitRoot:-"$(git rev-parse --show-toplevel || true)"}/src/lib/common.sh" # Source Common Libraries
+[ -n "$commonsSourced" ] || . "${gitRoot:-"$(git rev-parse --show-toplevel || true)"}/src/lib/common.sh" # Source Common Libraries
 
 # Core
 enableHandTracking() {
@@ -36,4 +36,5 @@ enableHandTracking() {
 	esac
 }
 
+# FIXME(Krey): Figure out how to prevent this from being executed on `. path/to/this/file`
 enableHandTracking # Call The Function

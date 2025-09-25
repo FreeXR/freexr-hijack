@@ -8,7 +8,8 @@ die() { printf "FATAL: %s\n" "$2"; exit ;}
 warn() { printf "WARN: %s\n" "$1" ;}
 status() { printf "STATUS: %s\n" "$1" ;}
 fixme() { printf "FIXME: %s\n" "$1"; exit 23 ;}
-warn() { [ -z "$DEBUG" ] || printf "DEBUG: %s\n" "$1" ;}
+debug() { [ -z "$DEBUG" ] || printf "DEBUG: %s\n" "$1" ;}
+success() { printf "OK: %s\n" "$1"; return 0 ;}
 
 # --- Pulse Check ---
 adb shell return 0 || die 1 "Device is not connected and authentificated with adb server"
@@ -151,8 +152,18 @@ installApkFromURL() {
 }
 
 deviceRootCheck() {
-	rootable="$(adb shell su -c "id -u")"
+	status "Checking device's root capability"
 
-	[ "$rootable" != 0 ] || return 0
+	! adb shell su -c "id -u" 2>/dev/null || {
+		export rootable=0
+		status "Confirmed device root"
+		return 0
+	}
+
+	warn "Device is not rooted!"
 	return 1
 }
+
+export commonsSourced=0
+
+deviceRootCheck || true

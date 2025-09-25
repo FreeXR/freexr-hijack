@@ -1,15 +1,17 @@
-#!/usr/bin/env sh
-# shellcheck shell=sh # POSIX
+#!/usr/bin/env ksh
+# shellcheck shell=ksh # POSIX
 
 ###! Script to disable automatic and forced updates
 
 set -e # Exit on false return
 
 # shellcheck source=../lib/common.sh
-. "${gitRoot:-"$(git rev-parse --show-toplevel || true)"}/src/lib/common.sh" # Source Common Libraries
+[ -n "$commonsSourced" ] || . "${gitRoot:-"$(git rev-parse --show-toplevel || true)"}/src/lib/common.sh" # Source Common Libraries
 
 # Core
 disableUpdates () {
+	status "Checking status of update feature"
+
 	case "$productManufacturer" in
 		"Oculus")
 			case "$productName" in
@@ -29,4 +31,5 @@ disableUpdates () {
 	esac
 }
 
-disableUpdates # Run the Library if called as standalone Script
+# FIXME(Krey): Figure out how to prevent this from being executed on `. path/to/this/file`
+# disableUpdates "$@" # Run the Library if called as standalone Script
