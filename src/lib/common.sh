@@ -1,21 +1,61 @@
-#!/usr/bin/env sh
-# shellcheck shell=sh # POSIX
+#!/usr/bin/env ksh
+# shellcheck shell=ksh # POSIX
 
 set -e # Exit on False
 
-# --- Helpers ---
-die() { printf "FATAL: %s\n" "$2"; exit ;}
-warn() { printf "WARN: %s\n" "$1" ;}
-status() { printf "STATUS: %s\n" "$1" ;}
-fixme() { printf "FIXME: %s\n" "$1"; exit 23 ;}
-debug() { [ -z "$DEBUG" ] || printf "DEBUG: %s\n" "$1" ;}
-success() { printf "OK: %s\n" "$1"; return 0 ;}
+# --- Colors ---
+## Reset to normal: \033[0m
+NORM="\033[0m"
 
-# --- Pulse Check ---
-adb shell return 0 || die 1 "Device is not connected and authentificated with adb server"
+# BLACK="\033[0;30m"
+# GRAY="\033[1;30m"
+RED="\033[0;31m"
+# LRED="\033[1;31m"
+GREEN="\033[0;32m"
+# LGREEN="\033[1;32m"
+YELLOW="\033[0;33m"
+# LYELLOW="\033[1;33m"
+BLUE="\033[0;34m"
+# LBLUE="\033[1;34m"
+# PURPLE="\033[0;35m"
+PINK="\033[1;35m"
+CYAN="\033[0;36m"
+# LCYAN="\033[1;36m"
+# LGRAY="\033[0;37m"
+# WHITE="\033[1;37m"
+
+## Attributes:
+# UNDERLINE="\033[4m"
+# FIXME(Krey): No idea why is this not working
+BOLD="\033[1m"
+# INVERT="\033[7m"
+
+# --- Helpers ---
+die() { printf "$BOLD${RED}FATAL: $NORM%s\n" "$2"; exit ;}
+warn() { printf "$BOLD${YELLOW}WARN: $NORM%s\n" "$1" ;}
+status() { printf "$BOLD${BLUE}STATUS: $NORM%s\n" "$1" ;}
+fixme() { printf "$BOLD${PINK}FIXME: $NORM%s\n" "$1"; exit ;}
+debug() { [ -z "$DEBUG" ] || printf "$BOLD${CYAN}DEBUG: $NORM%s\n" "$1" ;}
+success() { printf "$BOLD${GREEN}OK: $NORM%s\n" "$1"; return 0 ;}
+
+[ -z "$DEBUG" ] || ( die 1 test )
+[ -z "$DEBUG" ] || ( success test )
+debug test
+[ -z "$DEBUG" ] || status test
+[ -z "$DEBUG" ] || warn test
+[ -z "$DEBUG" ] || ( fixme test )
 
 # --- Exports ---
 projectName="FreeXR-Hijack"
+
+# --- Command Check ---
+status "Checking available commands"
+	command -v awk 1>/dev/null && awk --version | head -n1 | awk -v p="$(which awk || true) ::" '{print p, $0}'
+	command -v git 1>/dev/null && git --version | awk -v p="$(which git || true) ::" '{print p, $0}'
+	command -v adb 1>/dev/null && adb --version | awk -v p="$(which adb || true) ::" '{print p, $0}'
+
+# --- Pulse Check ---
+adb shell return 0 || die 1 "Device is not connected and authentificated with adb server"
 
 # shellcheck disable=SC2034 # Optional Variable
 gitRoot="$(git rev-parse --show-toplevel || true)"
@@ -51,35 +91,41 @@ isApkNameInstalled() {
 
 # Disable Package
 disableApp() {
-	[ -n "$(adb shell pm list packages -d | grep "$1" || true)" ] || {
+	adb shell pm list packages -f "$1" >/dev/null || fixme "Package '$1' is not available on this system this is likely a bug"
+
+	adb shell pm list packages -d | grep -o "package:$1" >/dev/null || {
 		status "Disabling apk '$1'"
 			adb shell pm disable-user --user 0 "$1"
 			return 0
 	}
 
-	status "apk '$1' is already disabled"
+	debug "Apk '$1' is already disabled"
 }
 
 # Enable Package
 enableApp() {
-	[ -n "$(adb shell pm list packages -e | grep "$1" || true)" ] || {
+	adb shell pm list packages -f "$1" >/dev/null || fixme "Package '$1' is not available on this system this is likely a bug"
+
+	adb shell pm list packages -e | grep -o "package:$1" >/dev/null || {
 		status "Enabling apk '$1'"
 			adb shell pm enable --user 0 "$1"
 			return 0
 	}
 
-	status "Apk '$1' is alread enabled"
+	debug "Apk '$1' is alread enabled"
 }
 
 # Uninstall Package
 uninstallApp() {
-	[ -n "$(adb shell pm list packages -a | grep "$1" || true)" ] || {
+	adb shell pm list packages -f "$1" >/dev/null || fixme "Package '$1' is not available on this system this is likely a bug"
+
+	! adb shell pm list packages -a | grep -o "package:$1" >/dev/null || {
 		status "Uninstalling apk '$1'"
 			adb shell pm uninstall --user 0 "$1"
 			return 0
 	}
 
-	status "Apk '$1' is already uninstalled"
+	debug "Apk '$1' is already uninstalled"
 }
 
 fdroidInstallApk() {
@@ -154,7 +200,7 @@ installApkFromURL() {
 deviceRootCheck() {
 	status "Checking device's root capability"
 
-	! adb shell su -c "id -u" 2>/dev/null || {
+	! adb shell su -c "id -u" >/dev/null 2>&1 || {
 		export rootable=0
 		status "Confirmed device root"
 		return 0

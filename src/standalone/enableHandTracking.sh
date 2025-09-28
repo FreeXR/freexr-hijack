@@ -37,4 +37,4 @@ enableHandTracking() {
 }
 
 # FIXME(Krey): Figure out how to prevent this from being executed on `. path/to/this/file`
-enableHandTracking # Call The Function
+# enableHandTracking # Call The Function
