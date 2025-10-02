@@ -24,6 +24,7 @@ enableHandTracking() {
 
 			! deviceRootCheck || {
 				status "Root detected, enabling hand-tracking via oculussetting"
+					# FIXME(Krey): Implement check for this so that we don't invoke it when we don't need to
 					adb shell su -c "oculussetting --set hand_tracking_opt_in 1 hand_tracking_enabled 1"
 					return 0
 			}

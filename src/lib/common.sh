@@ -49,34 +49,15 @@ debug test
 projectName="FreeXR-Hijack"
 
 # --- Command Check ---
-status "Checking available commands"
+status "Checking for required dependencies"
 	command -v awk 1>/dev/null && awk --version | head -n1 | awk -v p="$(which awk || true) ::" '{print p, $0}'
 	command -v git 1>/dev/null && git --version | awk -v p="$(which git || true) ::" '{print p, $0}'
 	command -v adb 1>/dev/null && adb --version | awk -v p="$(which adb || true) ::" '{print p, $0}'
-
-# --- Pulse Check ---
-adb shell return 0 || die 1 "Device is not connected and authentificated with adb server"
 
 # shellcheck disable=SC2034 # Optional Variable
 gitRoot="$(git rev-parse --show-toplevel || true)"
 
 projectCacheDir="$HOME/.cache/$projectName"
-
-# shellcheck disable=SC2155 # Optional Variable
-export productModel="$(adb shell getprop ro.product.model)"
-	status "Product Model Detected: $productModel"
-
-# shellcheck disable=SC2155 # Optional Variable
-export productManufacturer="$(adb shell getprop ro.product.manufacturer)"
-	status "Product Manufacturer Detected: $productManufacturer"
-
-# shellcheck disable=SC2155 # Optional Variable
-export productName="$(adb shell getprop ro.product.name)"
-	status "Product Name Detected: $productName"
-
-# shellcheck disable=SC2155 # Optional Variable
-export productDevice="$(adb shell getprop ro.product.device)"
-	status "Product Device Detected: $productDevice"
 
 # --- Init ---
 [ -d "$HOME" ] || die 1 "Your HOME Directory does not exist, exitting for safety"
@@ -93,6 +74,7 @@ isApkNameInstalled() {
 disableApp() {
 	adb shell pm list packages -f "$1" >/dev/null || fixme "Package '$1' is not available on this system this is likely a bug"
 
+	# shellcheck disable=SC2312 # Dunno how else to manage this
 	adb shell pm list packages -d | grep -o "package:$1" >/dev/null || {
 		status "Disabling apk '$1'"
 			adb shell pm disable-user --user 0 "$1"
@@ -106,6 +88,7 @@ disableApp() {
 enableApp() {
 	adb shell pm list packages -f "$1" >/dev/null || fixme "Package '$1' is not available on this system this is likely a bug"
 
+	# shellcheck disable=SC2312 # Dunno how else to manage this
 	adb shell pm list packages -e | grep -o "package:$1" >/dev/null || {
 		status "Enabling apk '$1'"
 			adb shell pm enable --user 0 "$1"
@@ -119,8 +102,10 @@ enableApp() {
 uninstallApp() {
 	adb shell pm list packages -f "$1" >/dev/null || fixme "Package '$1' is not available on this system this is likely a bug"
 
+	# shellcheck disable=SC2312 # Dunno how else to manage this
 	! adb shell pm list packages -a | grep -o "package:$1" >/dev/null || {
 		status "Uninstalling apk '$1'"
+			adb shell pm clear "$1"
 			adb shell pm uninstall --user 0 "$1"
 			return 0
 	}
@@ -211,5 +196,3 @@ deviceRootCheck() {
 }
 
 export commonsSourced=0
-
-deviceRootCheck || true

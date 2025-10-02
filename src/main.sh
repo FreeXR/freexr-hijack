@@ -37,6 +37,9 @@ set -e # Exit on false return
 # shellcheck source=./lib/common.sh
 . "${gitRoot:-"$(git rev-parse --show-toplevel || true)"}/src/lib/common.sh" # Source Common Libraries
 
+# shellcheck source=./standalone/adbPulseCheck.sh
+. "$gitRoot/src/standalone/adbPulseCheck.sh"
+
 # shellcheck source=./standalone/disableUpdates.sh
 . "$gitRoot/src/standalone/disableUpdates.sh"
 
@@ -49,14 +52,77 @@ set -e # Exit on false return
 # shellcheck source=./standalone/hijack.sh
 . "$gitRoot/src/standalone/hijack.sh"
 
+# shellcheck source=./standalone/identifyDevice.sh
+. "$gitRoot/src/standalone/identifyDevice.sh"
+
 # shellcheck source=./standalone/rootDevice.sh
 . "$gitRoot/src/standalone/rootDevice.sh"
 
+#! Command wrapper to run this on the headsets as standalone or on a host system as wired
+w_call() {
+	Wired -> adb shell cmd
+	standalone -> cmd
+	wired-multi -> adb -s .. shell cmd
+	standalone-multi -> cmd
+
+	if multiple adb devices; then
+		require selectedDevice to be set
+
+	if standalone; then
+		set standalone flag?
+
+	By default: Assume no adb
+
+
+
+	case "$wrapper" in
+		"wired"|"")
+			if [ -n "$selectedDevice" ]; then
+				adb -s "$selectedDevice" "$@"
+			else
+				adb "$@"
+			fi
+		;;
+		"standalone") exec "$@" ;;
+		*) die 1 "The variable 'wrapper' stores unimplemented value '$wrapper' in w_cmd() function"
+	esac
+}
+
 # Process Arguments
 while [ "$#" -gt 0 ]; do case "$1" in
+	"--select")
+		case "$2" in
+			*.*.*.*:*) # Matching by IP for WireLESS ADB
+				true
+			;;
+			[A-Z0-9]+) # By Seirla Number for wired ADB
+				true
+			;;
+			*) die 1 "The value for 'select' argument does not pass sanity: $2"
+		esac
+
+		selectedDevice="$2"
+
+		shift
+	;;
+	"--mode")
+		case "$2" in
+			"wired") true ;;
+			"standalone") true ;;
+			*) die 1 "Interface mode not implemented: $2"
+		esac
+
+		export wrapper="$2"
+	;;
 	"-d"|"--debug") export DEBUG=1 ;;
 	"--HIJACK")
+		adbPulseCheck
+
+		identifyDevice
+
 		disableUpdates
+
+		deviceRootCheck
 
 		rootDevice
 
@@ -70,4 +136,28 @@ while [ "$#" -gt 0 ]; do case "$1" in
 
 		success "Hijack Completed!"
 	;;
+	"--debloat")
+		adbPulseCheck
+
+		identifyDevice
+
+		removeStockApps
+	;;
+	"--enable-prox")
+		fixme "Argument '$1' is not implemented"
+	;;
+	"--disable-prox")
+		identifyDevice
+
+		status "Attempting to disable proximity sensor on the device"
+
+		case "$productName" in
+			eureka) adb shell am broadcast -a com.oculus.vrpowermanager.prox_close ;;
+			*) die 1 "Device '$productName' is not implemented for disabling proximity sensor"
+		esac
+	;;
+	"--poweroff")
+		adb shell reboot -p
+	;;
+	*) die 3 "Argument not implemented: $1"
 esac; shift; done
