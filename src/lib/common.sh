@@ -72,7 +72,7 @@ isApkNameInstalled() {
 
 # Disable Package
 disableApp() {
-	adb shell pm list packages -f "$1" >/dev/null || fixme "Package '$1' is not available on this system this is likely a bug"
+	adb shell pm list packages -a "$1" | grep -o "package:$1" >/dev/null || { warn "Package '$1' is not installed on this system, unable to disable"; return 0 ;}
 
 	# shellcheck disable=SC2312 # Dunno how else to manage this
 	adb shell pm list packages -d | grep -o "package:$1" >/dev/null || {
@@ -86,7 +86,7 @@ disableApp() {
 
 # Enable Package
 enableApp() {
-	adb shell pm list packages -f "$1" >/dev/null || fixme "Package '$1' is not available on this system this is likely a bug"
+	adb shell pm list packages -a "$1" | grep -o "package:$1" >/dev/null || { warn "Package '$1' is not installed on this system, unable to enable"; return 0 ;}
 
 	# shellcheck disable=SC2312 # Dunno how else to manage this
 	adb shell pm list packages -e | grep -o "package:$1" >/dev/null || {
@@ -100,7 +100,7 @@ enableApp() {
 
 # Uninstall Package
 uninstallApp() {
-	adb shell pm list packages -f "$1" >/dev/null || fixme "Package '$1' is not available on this system this is likely a bug"
+	adb shell pm list packages -a "$1" | grep -o "package:$1" >/dev/null || { debug "Package '$1' is already not installed on this system"; return 0 ;}
 
 	# shellcheck disable=SC2312 # Dunno how else to manage this
 	! adb shell pm list packages -a | grep -o "package:$1" >/dev/null || {
@@ -117,7 +117,7 @@ fdroidInstallApk() {
 	apkIdentifier="$1" # e.g. com.oculus.twilight
 
 	[ "$(adb shell pm list packages -a | grep "${apkIdentifier//_*/}" || true)" = "" ] || {
-		status "The '$apkIdentifier' is already installed, skipping.."
+		debug "The '$apkIdentifier' is already installed, skipping.."
 		return 0
 	}
 
@@ -136,7 +136,7 @@ installApkPath() {
 		status "Installing '$apkName' from '$apkPath'"
 		adb install "$apkPath"
 	else
-		status "The app '$apkName' is already installed, skipping.."
+		debug "The app '$apkName' is already installed, skipping.."
 	fi
 }
 
@@ -159,7 +159,7 @@ installApkFromURL() {
 	apkURL="$2" # https://github.com/veygax/eventhorizon/releases/download/v1.2/eventhorizon.apk
 	sha256sum="$3" # 3c203087e3af677651fd78a00f42c5d4c7bd81e83292016a9b1427ca8e05d66a
 
-	status "Evaluating installation request for apk '$apkName'"
+	debug "Evaluating installation request for apk '$apkName'"
 
 	# shellcheck disable=SC2310 # False positive, report to upstream
 	isApkNameInstalled "$apkName" || {
@@ -179,20 +179,21 @@ installApkFromURL() {
 		return 0
 	}
 
-	status "Apk '$apkName' is already installed, skipping.."
+	debug "Apk '$apkName' is already installed, skipping.."
 }
 
 deviceRootCheck() {
-	status "Checking device's root capability"
+	checkCmd="$(adb shell su -c "true" >/dev/null 2>&1; echo "$?")"
 
-	! adb shell su -c "id -u" >/dev/null 2>&1 || {
-		export rootable=0
-		status "Confirmed device root"
-		return 0
-	}
-
-	warn "Device is not rooted!"
-	return 1
+	case "$checkCmd" in
+		0)
+			debug "Device is confirmed rooted"
+			return 0 ;;
+		127) 
+			debug "Device is not rooted"
+			return 1 ;;
+		*) die 127 "Root checking command returned unimplemented return: $checkCmd"
+	esac
 }
 
 export commonsSourced=0

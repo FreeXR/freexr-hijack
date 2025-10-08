@@ -60,18 +60,18 @@ set -e # Exit on false return
 
 #! Command wrapper to run this on the headsets as standalone or on a host system as wired
 w_call() {
-	Wired -> adb shell cmd
-	standalone -> cmd
-	wired-multi -> adb -s .. shell cmd
-	standalone-multi -> cmd
+	# Wired -> adb shell cmd
+	# standalone -> cmd
+	# wired-multi -> adb -s .. shell cmd
+	# standalone-multi -> cmd
 
-	if multiple adb devices; then
-		require selectedDevice to be set
+	# if multiple adb devices; then
+	# 	require selectedDevice to be set
 
-	if standalone; then
-		set standalone flag?
+	# if standalone; then
+	# 	set standalone flag?
 
-	By default: Assume no adb
+	# By default: Assume no adb
 
 
 
@@ -115,6 +115,7 @@ while [ "$#" -gt 0 ]; do case "$1" in
 		export wrapper="$2"
 	;;
 	"-d"|"--debug") export DEBUG=1 ;;
+	"--trace") set -x ;;
 	"--HIJACK")
 		adbPulseCheck
 
@@ -122,7 +123,7 @@ while [ "$#" -gt 0 ]; do case "$1" in
 
 		disableUpdates
 
-		deviceRootCheck
+		deviceRootCheck || true
 
 		rootDevice
 

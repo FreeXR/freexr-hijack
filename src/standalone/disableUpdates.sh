@@ -25,6 +25,30 @@ disableUpdates () {
 
 			disableApp com.oculus.updater # Disable updates on META Quest Devices
 
+			if deviceRootCheck; then
+				case "$(adb shell su -c 'stat -c "%a" /data/data/com.oculus.updater')" in
+					# Android quirks may remove the leading zeros
+					"000"|"0") true ;; 
+					*) adb shell su -c 'chmod -vR 000 /data/data/com.oculus.updater'
+				esac
+
+				adb shell test -d /data/data/ota || adb shell su -c 'mkdir -v /data/data/ota'
+				case "$(adb shell su -c 'stat -c "%a" /data/data/ota')" in
+					# Android quirks may remove the leading zeros
+					"000"|"0") true ;; 
+					*) adb shell su -c 'chmod -vR 000 /data/data/ota'
+				esac
+
+				adb shell test -d /data/data/ota_package || adb shell su -c 'mkdir -v /data/data/ota_package'
+				case "$(adb shell su -c 'stat -c "%a" /data/data/ota_package')" in
+					# Android quirks may remove the leading zeros
+					"000"|"0") true ;; 
+					*) adb shell su -c 'chmod -vR 000 /data/data/ota_package'
+				esac
+			else
+				warn "Device is not rooted, unable to set chmod 000 on /data/data/{ota,ota_package,com.oculus.updater} for extra safety! Root your device and then re-run this script!"
+			fi
+
 			return 0
 		;;
 		*) fixme "Device '$productName' of Manufacturer '$productManufacturer' is not yet implemented"

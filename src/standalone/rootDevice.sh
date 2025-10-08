@@ -12,10 +12,9 @@ set -e # Exit on false return
 rootDevice() {
 	status "Attempting to root the device"
 
-	[ "$rootable" != 0 ] || {
-		success "Device is already rooted, skipping setup"
-		return 0
-	}
+	# FIXME-QA(Krey): Something weird is goign on here.. it's keep continueing on return 0 ?
+	! deviceRootCheck || { success "Device is already rooted, skipping setup"; return 0 ;}
+
 
 	case "$productManufacturer" in
 		"Oculus")
