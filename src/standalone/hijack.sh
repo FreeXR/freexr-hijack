@@ -57,10 +57,11 @@ hijack() {
 	# FIXME(Krey): Remove META AI app
 
 	# --- Mediabox ---
-	installApkFromURL \
-	com.stremio.one \
-	https://dl.strem.io/android/v1.6.13-com.stremio.one/com.stremio.one-1.6.13-4208840-arm64-v8a.apk \
-	4eae53f4c9680a8797f745c38a202489f488da9c2bb29087f3f35bf9b2c6655c
+	warn "Stremio have been disabled due to https://github.com/FreeXR/freexr-hijack/issues/2#issuecomment-3734164008, pending review.."
+	# installApkFromURL \
+	# com.stremio.one \
+	# https://dl.strem.io/android/v1.6.13-com.stremio.one/com.stremio.one-1.6.13-4208840-arm64-v8a.apk \
+	# 4eae53f4c9680a8797f745c38a202489f488da9c2bb29087f3f35bf9b2c6655c
 
 	# --- Maps ---
 	fdroidInstallApk "net.osmand.plus_510703"
