@@ -1,0 +1,7 @@
+{
+	imports = [
+		./docs
+		./editors
+		./tools
+	];
+}
